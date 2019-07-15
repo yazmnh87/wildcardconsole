@@ -3,7 +3,7 @@ import firebase from 'firebase'
 const Context = React.createContext()
 
 var firebaseConfig = {
-    apiKey: "AIzaSyCREO69IVvy9BT-6dt_dXHS-FTFnBQGxk4",
+    apiKey: `${process.env.REACT_APP_KEY}`,
     authDomain: "timetracker-8d078.firebaseapp.com",
     databaseURL: "https://timetracker-8d078.firebaseio.com",
     projectId: "timetracker-8d078",
