@@ -9,23 +9,35 @@ import { faPlus } from "@fortawesome/free-solid-svg-icons";
 class Landing extends Component {
   state = {
     projectName: "",
-    projects: []
+    projects: [],
+    projectType: "",
+    projectStartDate: Date.now()
   };
 
   componentDidMount() {
-    
+    this.checkLocalStorge()
   }
 
-  
+  checkLocalStorge = () => {
+    const getProjects = JSON.parse(localStorage.getItem('projects'))
+    console.log(typeof(getProjects))
+    this.setState({
+      projects: [getProjects]
 
-  createProject = () => {
+    }, ()=> console.log(this.state))
+  }
+
+  createProject = (e) => {
+    e.preventDefault()
     const project = {
-      projectName: this.state.projectName
+      projectName: this.state.projectName,
+      projectStartDate: this.state.projectStartDate
     };
+
     firebase
       .database()
       .ref(`${this.props.currentUser.user.uid}/projects`)
-      .set(project);
+      .update(project, ()=> this.setState(prevState=>({projects: [...prevState,project]})));
   };
 
   userInfo = () => {
@@ -37,21 +49,28 @@ class Landing extends Component {
     } else return null;
   };
 
+  setProjectType = (e) => {
+    this.setState({
+      [e.target.name]: e.target.value
+    })
+  }
+
   handleChange = e => {
     this.setState({
       [e.target.name]: e.target.value
     });
   };
   render() {
-    const mappedProjects = (this.props.projects.length !== 0) ?this.props.projects.map(project => {
+    const mappedProjects = !!this.props.projects.length && this.props.projects  ? this.props.projects.map(project => {
+      console.log(project)
       return (
-        <>
-        <tr>
+        <tr key={project.projectStartDate}>
           <td className="text-white">{project.projectName}</td>
+          <td>{new Date(project.projectStartDate * 1000).toString().slice(0,10)}</td>
+          <td><button className="btn btn-danger">Delete</button></td>
         </tr>
-        </>
       )
-    }) : console.log('map projects not')
+    }) : console.log(this.state.projects,'map projects not')
     
     return (
       <>
@@ -78,7 +97,7 @@ class Landing extends Component {
                   <h4>Add a New Project</h4>
                 </div>
                 <div className="modal-body">
-                  <form className="form-group" onSubmit={""}>
+                  <form className="form-group">
                     <label className="mb-2">Project Name</label>
                     <input
                       className="form-control"
@@ -86,16 +105,16 @@ class Landing extends Component {
                       value={this.state.projectName}
                       onChange={this.handleChange}
                     />
-                    <div class="form-check">
+                    <div className="form-check">
                       <input
                         className="form-check-input"
                         type="radio"
                         name="web"
                         id="web"
                         value="web"
-                        checked
+                        onChange={()=>this.setProjectType}
                       />
-                      <label className="form-check-label" for="web">
+                      <label className="form-check-label" htmlFor="web">
                         Web
                       </label>
                     </div>
@@ -106,14 +125,15 @@ class Landing extends Component {
                         name="mobile"
                         id="mobile"
                         value="mobile"
+                        onChange={()=>this.setProjectType}
                       />
-                      <label className="form-check-label" for="mobile">
+                      <label className="form-check-label" htmlFor="mobile">
                         Mobile
                       </label>
                     </div>
                     <button
                       className="btn btn-primary mt-2"
-                      onClick={this.createProject}
+                      onClick={(e)=>this.createProject()}
                     >
                       Create Project
                     </button>
@@ -123,13 +143,22 @@ class Landing extends Component {
             </div>
           </div>
           <div className="ml-5 mt-3">
-            <h3 className="text-white mb-2 border-bottom border-light">Projects</h3>
-            <table>
+            <div style={{width: '90%'}}>
+            <h3 className="text-white mb-2 border-bottom border-light" >Projects</h3>
+            </div>
+            <div style={{width:'90%'}}>
+            <table className="table-condensed">
+            <thead>
               <tr>
                 <th className="text-white border-bottom border-light">Project Name</th>
+                <th className="text-white border-bottom border-light">Date Created</th>
               </tr>
+              </thead>
+              <tbody>
               {mappedProjects}
+              </tbody>
             </table>
+            </div>
             </div>
         </div>
       </>

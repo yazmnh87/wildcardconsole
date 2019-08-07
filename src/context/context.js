@@ -18,7 +18,8 @@ export class Provider extends Component {
     state ={
         userName: "",
         currentUser: {},
-        projects: []
+        projects: [],
+        loggedIn: null
     }
 
     componentDidMount(){
@@ -28,7 +29,11 @@ export class Provider extends Component {
     initFirebase = () => firebase.initializeApp(firebaseConfig)
 
     registerUser = (email, password) => {
-        firebase.auth().createUserWithEmailAndPassword(email, password).then((res)=> this.setState({currentUser: res}, ()=> firebase.database().ref(`${this.state.currentUser.user.uid}/user`).set({userName: this.state.userName}))
+        this.initFirebase()
+        firebase.auth().createUserWithEmailAndPassword(email, password).then((res)=> { const user = firebase.auth().currentUser;
+            this.setState({currentUser: res, loggedIn: true}, ()=> firebase.database().ref(`${this.state.currentUser.user.uid}/user`).set({userName: this.state.userName}), user.updateProfile({
+                displayName: this.state.userName
+            }))}
         
         )
         
@@ -45,19 +50,28 @@ export class Provider extends Component {
             .ref(`${this.state.currentUser.user.uid}/projects`)
             .once('value')
             .then(r =>
-                this.setState({ projects: [r.val()] }, () => console.log(this.state.projects))
-            )
-            .catch(e => console.log(e));
+                this.setState({ projects: [r.val()] }, () =>  localStorage.setItem('projects', JSON.stringify(this.state.projects))
+                ))
+            .catch(e => console.log(e))
         } else console.log("projects arent coming")
       };
 
     setCurrentUser = (user) => {
-        this.setState({userName: user})
-    }
+        console.log(user)
+        this.setState({userName: user}, ()=> localStorage.setItem('name', this.state.userName)
+        )}
 
     login = (email, password) => {
+        this.initFirebase()
         firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(res => this.setState({currentUser: res}, ()=> this.getProjects()))
+        .then(res => {
+            const user = firebase.auth().currentUser
+            const {displayName, email, uid, emailedVerified} = user
+            if(user !== null){
+                console.log(displayName, email, uid, emailedVerified)
+            }
+            this.setState({currentUser: res, userName: displayName, loggedIn: true}, ()=> this.getProjects(), console.log(firebase.auth().currentUser))
+    })
         .catch(err => console.log(err))
         
     }

@@ -32,8 +32,8 @@ class Login extends Component {
   }
 
 loginUser = (email, password ) => {
-    this.props.initFirebase()
     this.props.login(email, password)
+    this.props.setCurrentUser(firebase.auth().currentUser)
     this.props.history.push('/landing')
 
 }
